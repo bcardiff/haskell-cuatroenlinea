@@ -19,7 +19,9 @@ common warnings
 
 library
     import:           warnings
-    exposed-modules:  MyLib
+    exposed-modules:  
+        MyLib
+        CuatroEnLinea
     -- other-modules:
     -- other-extensions:
     build-depends:    base ^>=4.17.2.1
