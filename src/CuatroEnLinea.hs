@@ -20,8 +20,8 @@ data Juego = Juego
   }
   deriving (Show)
 
--- >>> poner Amarillo 1 (fst (poner Rojo 1 nuevo))
--- (Juego {grilla = ([Amarillo,Rojo],[],[],[],[],[],[]), actual = Rojo},Ok)
+-- >>> casillas $ fst (poner Amarillo 1 (fst (poner Rojo 1 nuevo)))
+-- [[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Just Amarillo,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing],[Just Rojo,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing]]
 
 data Color = Amarillo | Rojo
   deriving (Show, Eq)
@@ -85,7 +85,22 @@ cambiarColumna col nueva j =
 
 -- | Devuelve la grilla en formato de filas
 casillas :: Juego -> [[Maybe Color]]
-casillas _ = _
+casillas j =
+  let casillasPorColumna = map (\c -> dameColumnaCompleta c j) [1 .. 7]
+   in traspuesta casillasPorColumna
+
+traspuesta :: [[a]] -> [[a]]
+traspuesta l
+  | length (head l) == 1 = [map head l]
+  | otherwise = map head l : traspuesta (map tail l)
+
+-- >>> traspuesta [[1,2,3],[4,5,6],[7,8,9]]
+-- [[1,4,7],[2,5,8],[3,6,9]]
+
+-- >>> map (\c -> c + 10) [1..7]
+-- [11,12,13,14,15,16,17]
+
+-- [f 1,f 2,f 3,f 4,f 5,f 6,f 7]
 
 -- | Devuelve una columna con todas casillas. Las vacian como Nothing
 dameColumnaCompleta :: Columna -> Juego -> [Maybe Color]
