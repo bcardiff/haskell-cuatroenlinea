@@ -6,6 +6,7 @@ module CuatroEnLinea
     nuevo,
     turno,
     poner,
+    casillas,
   )
 where
 
@@ -44,11 +45,14 @@ nuevo =
 turno :: Juego -> Color
 turno j = actual j
 
+alturaColumna :: Int
+alturaColumna = 6
+
 poner :: Color -> Columna -> Juego -> (Juego, Resultado)
 poner c col j
   | c /= turno j = (j, TurnoInvalido)
   | col < 1 || col > 7 = (j, ColumnaInvalida)
-  | length (dameColumna col j) >= 6 = (j, ColumnaCompleta)
+  | length (dameColumna col j) >= alturaColumna = (j, ColumnaCompleta)
   | otherwise =
       ( Juego
           { grilla = cambiarColumna col (c : dameColumna col j) j,
@@ -78,6 +82,33 @@ cambiarColumna col nueva j =
     (5, (a, b, c, d, _, f, g)) -> (a, b, c, d, nueva, f, g)
     (6, (a, b, c, d, e, _, g)) -> (a, b, c, d, e, nueva, g)
     (7, (a, b, c, d, e, f, _)) -> (a, b, c, d, e, f, nueva)
+
+-- | Devuelve la grilla en formato de filas
+casillas :: Juego -> [[Maybe Color]]
+casillas _ = _
+
+-- | Devuelve una columna con todas casillas. Las vacian como Nothing
+dameColumnaCompleta :: Columna -> Juego -> [Maybe Color]
+dameColumnaCompleta c j =
+  let justify :: [Color] -> [Maybe Color]
+      justify [] = []
+      justify (x : xs) = Just x : justify xs
+
+      completarColumna :: [Maybe Color] -> [Maybe Color]
+      completarColumna l
+        | length l == alturaColumna = l
+        | otherwise = completarColumna (Nothing : l)
+   in completarColumna (justify (dameColumna c j))
+
+-- implementación alternativa sin recursión
+dameColumnaCompleta' :: Columna -> Juego -> [Maybe Color]
+dameColumnaCompleta' c j =
+  let columna = dameColumna c j
+   in replicate (alturaColumna - length columna) Nothing ++ map Just columna
+
+-- [Rojo, Amarillo]
+
+-- [Nothing, Nothing, Nothing, Nothing, Just Rojo, Just Amarillo]
 
 -- contenido :: Columna -> Fila -> Juego -> Maybe Color
 -- termino :: Juego -> Bool
