@@ -20,7 +20,7 @@ common warnings
 library
     import:           warnings
     exposed-modules:  
-        MyLib
+        CLI
         CuatroEnLinea
     -- other-modules:
     -- other-extensions:
