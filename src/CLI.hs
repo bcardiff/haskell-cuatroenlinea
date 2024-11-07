@@ -1,13 +1,71 @@
 module CLI (main) where
 
 import CuatroEnLinea
+import Data.Char
+import TinyApp.Interactive
 
 main :: IO ()
-main =
-  let j0 = nuevo
-      (j1, r1) = poner Rojo 1 j0
-      (j2, r2) = poner Amarillo 1 j1
-   in putStrLn (showJuego j2)
+main = runInteractive cuatroEnLinea
+
+data State = State
+  { juego :: Juego,
+    columnaActual :: Int
+  }
+  deriving (Show)
+
+cuatroEnLinea :: Sandbox State
+cuatroEnLinea =
+  Sandbox
+    { initialize = State {juego = nuevo, columnaActual = 1},
+      render = \s ->
+        (show s)
+          <> "\n\n\n"
+          <> showColumnaActual (columnaActual s) (turno (juego s))
+          <> "\n"
+          <> "-------\n"
+          <> showJuego (juego s),
+      update = \(Key key _) s ->
+        case key of
+          KEsc -> (s, Exit)
+          KChar 'q' -> (s, Exit)
+          KChar 'n' -> (s {juego = nuevo}, Continue)
+          KLeft -> (s {columnaActual = max (columnaActual s - 1) 1}, Continue)
+          KRight -> (s {columnaActual = min (columnaActual s + 1) 7}, Continue)
+          KDown -> (poner' s (columnaActual s), Continue)
+          KEnter -> (poner' s (columnaActual s), Continue)
+          KChar c ->
+            if c >= '1' && c <= '7'
+              then
+                let numCol = ord c - ord '0'
+                 in (poner' s numCol, Continue)
+              else
+                (s, Continue)
+          _ -> (s, Continue)
+    }
+
+poner' :: State -> Int -> State
+poner' s numCol =
+  let j' = fst (poner (turno (juego s)) numCol (juego s))
+   in s {juego = j'}
+
+-- jugar :: Juego -> IO ()
+-- jugar j = do
+--   putStrLn $ showJuego j
+--   col <- intPrompt "Donde va la pieza 1-7?"
+--   let (j', r') = poner (turno j) col j
+--   jugar j'
+
+-- intPrompt :: String -> IO Int
+-- intPrompt prompt = do
+--   putStrLn prompt
+--   input <- getLine
+--   pure (read input)
+
+-- main =
+--   let j0 = nuevo
+--       (j1, r1) = poner Rojo 1 j0
+--       (j2, r2) = poner Amarillo 1 j1
+--    in putStrLn (showJuego j2)
 
 showJuego :: Juego -> String
 showJuego j =
@@ -18,6 +76,17 @@ showFila :: [Maybe Color] -> String
 showFila l = concat (map showColor l)
 
 showColor :: Maybe Color -> String
-showColor Nothing = "⚪️"
-showColor (Just Amarillo) = "🟡"
-showColor (Just Rojo) = "🔴"
+showColor Nothing = " "
+showColor (Just Amarillo) = "O"
+showColor (Just Rojo) = "X"
+
+-- showColor :: Maybe Color -> String
+-- showColor Nothing = "⚪️"
+-- showColor (Just Amarillo) = "🟡"
+-- showColor (Just Rojo) = "🔴"
+
+showColumnaActual :: Int -> Color -> String
+showColumnaActual i c =
+  concat (replicate (i - 1) (showColor Nothing))
+    <> showColor (Just c)
+    <> concat (replicate (7 - i) (showColor Nothing))
