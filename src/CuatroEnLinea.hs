@@ -30,7 +30,6 @@ type Columna = Int
 
 data Resultado
   = Ok
-  | TurnoInvalido
   | ColumnaInvalida
   | ColumnaCompleta
   deriving (Show, Eq)
@@ -48,9 +47,8 @@ turno j = actual j
 alturaColumna :: Int
 alturaColumna = 6
 
-poner :: Color -> Columna -> Juego -> (Juego, Resultado)
-poner c col j
-  | c /= turno j = (j, TurnoInvalido)
+poner :: Columna -> Juego -> (Juego, Resultado)
+poner col j
   | col < 1 || col > 7 = (j, ColumnaInvalida)
   | length (dameColumna col j) >= alturaColumna = (j, ColumnaCompleta)
   | otherwise =
@@ -60,6 +58,8 @@ poner c col j
           },
         Ok
       )
+  where
+    c = actual j
 
 dameColumna :: Columna -> Juego -> [Color]
 dameColumna col j =

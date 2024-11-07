@@ -45,7 +45,7 @@ cuatroEnLinea =
 
 poner' :: State -> Int -> State
 poner' s numCol =
-  let j' = fst (poner (turno (juego s)) numCol (juego s))
+  let j' = fst (poner numCol (juego s))
    in s {juego = j'}
 
 -- jugar :: Juego -> IO ()
