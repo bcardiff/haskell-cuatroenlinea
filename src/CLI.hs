@@ -20,9 +20,11 @@ cuatroEnLinea =
       render = \s ->
         show s
           <> "\n\n\n"
+          <> "  "
           <> showColumnaActual (columnaActual s) (turno (juego s))
           <> "\n\n"
-          <> showJuego (juego s),
+          <> showJuego (juego s)
+          <> "+---------------+",
       update = \(Key key _) s ->
         case key of
           KEsc -> (s, Exit)
@@ -69,7 +71,7 @@ poner' s numCol =
 showJuego :: Juego -> String
 showJuego j =
   let css = casillas j
-   in concat (map (\f -> showFila f <> "\n") css)
+   in concat (map (\f -> "| " <> showFila f <> "|\n") css)
 
 showFila :: [Maybe Color] -> String
 showFila l = concat (map showColor l)
