@@ -18,11 +18,10 @@ cuatroEnLinea =
   Sandbox
     { initialize = State {juego = nuevo, columnaActual = 1},
       render = \s ->
-        (show s)
+        show s
           <> "\n\n\n"
           <> showColumnaActual (columnaActual s) (turno (juego s))
-          <> "\n"
-          <> "-------\n"
+          <> "\n\n"
           <> showJuego (juego s),
       update = \(Key key _) s ->
         case key of
@@ -70,20 +69,22 @@ poner' s numCol =
 showJuego :: Juego -> String
 showJuego j =
   let css = casillas j
-   in concat (map (\f -> showFila f ++ "\n") css)
+   in concat (map (\f -> showFila f <> "\n") css)
 
 showFila :: [Maybe Color] -> String
 showFila l = concat (map showColor l)
 
-showColor :: Maybe Color -> String
-showColor Nothing = " "
-showColor (Just Amarillo) = "O"
-showColor (Just Rojo) = "X"
+-- https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences
 
--- showColor :: Maybe Color -> String
--- showColor Nothing = "⚪️"
--- showColor (Just Amarillo) = "🟡"
--- showColor (Just Rojo) = "🔴"
+showColor :: Maybe Color -> String
+showColor Nothing = "  "
+showColor (Just Amarillo) = ansiFgYellow <> "● " <> ansiResetColor
+showColor (Just Rojo) = ansiFgRed <> "● " <> ansiResetColor
+
+ansiFgRed, ansiFgYellow, ansiResetColor :: String
+ansiResetColor = "\ESC[39m\ESC[49m"
+ansiFgYellow = "\ESC[31m"
+ansiFgRed = "\ESC[33m"
 
 showColumnaActual :: Int -> Color -> String
 showColumnaActual i c =
