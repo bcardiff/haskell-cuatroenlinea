@@ -4,6 +4,7 @@ module CuatroEnLinea
     Columna,
     Resultado (..),
     nuevo,
+    esNuevo,
     turno,
     poner,
     casillas,
@@ -40,6 +41,9 @@ nuevo =
     { grilla = ([], [], [], [], [], [], []),
       actual = Rojo
     }
+
+esNuevo :: Juego -> Bool
+esNuevo j = grilla j == ([], [], [], [], [], [], [])
 
 turno :: Juego -> Color
 turno j = actual j

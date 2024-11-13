@@ -9,7 +9,7 @@ main = runInteractive cuatroEnLinea
 
 data State = State
   { juego :: Juego,
-    anterior :: Juego,
+    jugadas :: [Columna],
     columnaActual :: Int
   }
   deriving (Show)
@@ -20,7 +20,7 @@ cuatroEnLinea =
     { initialize =
         State
           { juego = nuevo,
-            anterior = nuevo,
+            jugadas = [],
             columnaActual = 1
           },
       render = \s ->
@@ -35,8 +35,28 @@ cuatroEnLinea =
         case key of
           KEsc -> (s, Exit)
           KChar 'q' -> (s, Exit)
-          KChar 'n' -> (s {juego = nuevo, anterior = juego s}, Continue)
-          KChar 'u' -> (s {juego = anterior s}, Continue)
+          KChar 'n' -> (s {juego = nuevo}, Continue)
+          KChar 'u' ->
+            if length (jugadas s) > 0
+              then
+                let jugadasAnteriores =
+                      if esNuevo (juego s)
+                        then
+                          jugadas s
+                        else
+                          init (jugadas s)
+                 in ( ponerMuchos
+                        ( State
+                            { juego = nuevo,
+                              jugadas = [],
+                              columnaActual = columnaActual s
+                            }
+                        )
+                        jugadasAnteriores,
+                      Continue
+                    )
+              else
+                (s, Continue)
           KLeft -> (s {columnaActual = max (columnaActual s - 1) 1}, Continue)
           KRight -> (s {columnaActual = min (columnaActual s + 1) 7}, Continue)
           KDown -> (poner' s (columnaActual s), Continue)
@@ -51,16 +71,20 @@ cuatroEnLinea =
           _ -> (s, Continue)
     }
 
-poner' :: State -> Int -> State
+ponerMuchos :: State -> [Columna] -> State
+ponerMuchos s [] = s
+ponerMuchos s (c : cs) = ponerMuchos (poner' s c) cs
+
+poner' :: State -> Columna -> State
 poner' s numCol =
   let j' = poner numCol (juego s)
    in s
         { juego = fst j',
-          anterior =
+          jugadas =
             case snd j' of
-              Ok -> juego s
-              ColumnaInvalida -> anterior s
-              ColumnaCompleta -> anterior s
+              Ok -> jugadas s ++ [numCol]
+              ColumnaInvalida -> jugadas s
+              ColumnaCompleta -> jugadas s
         }
 
 -- jugar :: Juego -> IO ()
