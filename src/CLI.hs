@@ -1,11 +1,51 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module CLI (main) where
 
 import CuatroEnLinea
+import Data.Aeson
 import Data.Char
+import GHC.Generics (Generic)
+import System.IO.Error
 import TinyApp.Interactive
 
+data Archivo = Archivo
+  { jugadasAr :: [Columna],
+    columnaActualAr :: Int
+  }
+  deriving (Generic)
+
+instance ToJSON Archivo
+
+instance FromJSON Archivo
+
 main :: IO ()
-main = runInteractive cuatroEnLinea
+main = do
+  --   c <- readFile "juego.json"
+  dinicial <- catchIOError (decodeFileStrict "juego.json") (\_ -> pure Nothing)
+  s <- runInteractive' (cuatroEnLinea (cargarArchivo dinicial))
+  let dfinal = Archivo {jugadasAr = jugadas s, columnaActualAr = columnaActual s}
+  encodeFile "juego.json" dfinal
+  --   writeFile "juego.json" ("{\"columnaActual\":" <> show (columnaActual s) <> "}")
+
+  pure ()
+
+cargarArchivo :: Maybe Archivo -> State
+cargarArchivo (Just archivo) =
+  ponerMuchos
+    ( State
+        { juego = nuevo,
+          jugadas = [],
+          columnaActual = columnaActualAr archivo
+        }
+    )
+    (jugadasAr archivo)
+cargarArchivo Nothing =
+  State
+    { juego = nuevo,
+      jugadas = [],
+      columnaActual = 1
+    }
 
 data State = State
   { juego :: Juego,
@@ -14,15 +54,15 @@ data State = State
   }
   deriving (Show)
 
-cuatroEnLinea :: Sandbox State
-cuatroEnLinea =
+cuatroEnLinea :: State -> Sandbox State
+cuatroEnLinea firstState =
   Sandbox
-    { initialize =
-        State
-          { juego = nuevo,
-            jugadas = [],
-            columnaActual = 1
-          },
+    { initialize = firstState,
+      --   State
+      --     { juego = nuevo,
+      --       jugadas = [],
+      --       columnaActual = 1
+      --     },
       render = \s ->
         show s
           <> "\n\n\n"
