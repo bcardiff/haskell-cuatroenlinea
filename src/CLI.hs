@@ -9,6 +9,7 @@ main = runInteractive cuatroEnLinea
 
 data State = State
   { juego :: Juego,
+    anterior :: Juego,
     columnaActual :: Int
   }
   deriving (Show)
@@ -16,7 +17,12 @@ data State = State
 cuatroEnLinea :: Sandbox State
 cuatroEnLinea =
   Sandbox
-    { initialize = State {juego = nuevo, columnaActual = 1},
+    { initialize =
+        State
+          { juego = nuevo,
+            anterior = nuevo,
+            columnaActual = 1
+          },
       render = \s ->
         show s
           <> "\n\n\n"
@@ -29,7 +35,8 @@ cuatroEnLinea =
         case key of
           KEsc -> (s, Exit)
           KChar 'q' -> (s, Exit)
-          KChar 'n' -> (s {juego = nuevo}, Continue)
+          KChar 'n' -> (s {juego = nuevo, anterior = juego s}, Continue)
+          KChar 'u' -> (s {juego = anterior s}, Continue)
           KLeft -> (s {columnaActual = max (columnaActual s - 1) 1}, Continue)
           KRight -> (s {columnaActual = min (columnaActual s + 1) 7}, Continue)
           KDown -> (poner' s (columnaActual s), Continue)
@@ -46,8 +53,15 @@ cuatroEnLinea =
 
 poner' :: State -> Int -> State
 poner' s numCol =
-  let j' = fst (poner numCol (juego s))
-   in s {juego = j'}
+  let j' = poner numCol (juego s)
+   in s
+        { juego = fst j',
+          anterior =
+            case snd j' of
+              Ok -> juego s
+              ColumnaInvalida -> anterior s
+              ColumnaCompleta -> anterior s
+        }
 
 -- jugar :: Juego -> IO ()
 -- jugar j = do
