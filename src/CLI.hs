@@ -76,7 +76,9 @@ cuatroEnLinea firstState =
           <> showColumnaActual (columnaActual s) (turno (juego s))
           <> "\n\n"
           <> showJuego (juego s)
-          <> "+---------------+",
+          <> "+---------------+"
+          <> "\n\n"
+          <> mostarEstadoFinal (juego s),
       update = \(Key key _) s ->
         case key of
           KEsc -> (s, Exit)
@@ -117,6 +119,14 @@ cuatroEnLinea firstState =
           _ -> (s, Continue)
     }
 
+mostarEstadoFinal :: Juego -> String
+mostarEstadoFinal j
+  | not (termino j) = ""
+  | otherwise =
+      case ganador j of
+        Nothing -> "Empate!"
+        Just c -> "Gano el " <> show c
+
 ponerMuchos :: State -> [Columna] -> State
 ponerMuchos s [] = s
 ponerMuchos s (c : cs) = ponerMuchos (poner' s c) cs
@@ -131,6 +141,7 @@ poner' s numCol =
               Ok -> jugadas s ++ [numCol]
               ColumnaInvalida -> jugadas s
               ColumnaCompleta -> jugadas s
+              JuegoTerminado -> jugadas s
         }
 
 -- jugar :: Juego -> IO ()
@@ -169,8 +180,8 @@ showColor (Just Rojo) = ansiFgRed <> "● " <> ansiResetColor
 
 ansiFgRed, ansiFgYellow, ansiResetColor :: String
 ansiResetColor = "\ESC[39m\ESC[49m"
-ansiFgYellow = "\ESC[31m"
-ansiFgRed = "\ESC[33m"
+ansiFgYellow = "\ESC[33m"
+ansiFgRed = "\ESC[31m"
 
 showColumnaActual :: Int -> Color -> String
 showColumnaActual i c =

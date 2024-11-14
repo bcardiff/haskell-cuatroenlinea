@@ -8,16 +8,22 @@ module CuatroEnLinea
     turno,
     poner,
     casillas,
+    termino,
+    ganador,
   )
 where
 
 type Grilla = ([Color], [Color], [Color], [Color], [Color], [Color], [Color])
 
+data Estado = EnProgreso | Gano Color | Empate
+  deriving (Show, Eq)
+
 data Juego = Juego
   { -- Cada [Color] es una columna de la grilla
     -- la cabeza de la lista es la ficha superior
     grilla :: Grilla,
-    actual :: Color
+    actual :: Color,
+    estado :: Estado
   }
   deriving (Show)
 
@@ -33,13 +39,15 @@ data Resultado
   = Ok
   | ColumnaInvalida
   | ColumnaCompleta
+  | JuegoTerminado
   deriving (Show, Eq)
 
 nuevo :: Juego
 nuevo =
   Juego
     { grilla = ([], [], [], [], [], [], []),
-      actual = Rojo
+      actual = Rojo,
+      estado = EnProgreso
     }
 
 esNuevo :: Juego -> Bool
@@ -54,16 +62,65 @@ alturaColumna = 6
 poner :: Columna -> Juego -> (Juego, Resultado)
 poner col j
   | col < 1 || col > 7 = (j, ColumnaInvalida)
+  | estado j /= EnProgreso = (j, JuegoTerminado)
   | length (dameColumna col j) >= alturaColumna = (j, ColumnaCompleta)
   | otherwise =
-      ( Juego
-          { grilla = cambiarColumna col (c : dameColumna col j) j,
-            actual = if c == Rojo then Amarillo else Rojo
-          },
+      ( verSiGanoOTerminoColorPoniendo
+          col
+          c
+          Juego
+            { grilla = cambiarColumna col (c : dameColumna col j) j,
+              actual = if c == Rojo then Amarillo else Rojo,
+              estado = EnProgreso
+            },
         Ok
       )
   where
     c = actual j
+
+verSiGanoOTerminoColorPoniendo :: Columna -> Color -> Juego -> Juego
+verSiGanoOTerminoColorPoniendo col c j
+  | hay4 columnaConFichas c = j {estado = Gano c}
+  | hay4 (m !! indiceFilaActual) (Just c) = j {estado = Gano c}
+  | hay4 diagonalDescendiente (Just c) = j {estado = Gano c}
+  | tableroLleno j = j {estado = Empate}
+  | otherwise = j
+  where
+    m = casillas j
+    indiceFilaActual = alturaColumna - length columnaConFichas
+    columnaConFichas = dameColumna col j
+    indiceColumnaActual = col - 1
+    dondeEmpiezaDiagonalDesc =
+      if indiceFilaActual > indiceColumnaActual
+        then
+          (indiceFilaActual - indiceColumnaActual, 0)
+        else
+          (0, indiceColumnaActual - indiceFilaActual)
+    diagonalDescendiente = diagonalD m dondeEmpiezaDiagonalDesc
+
+-- (fila, columa)
+diagonalD :: [[a]] -> (Int, Int) -> [a]
+diagonalD m (f, c)
+  | enRango = ((m !! f) !! c) : diagonalD m (f + 1, c + 1)
+  | otherwise = []
+  where
+    enRango = 0 <= f && f < length m && 0 <= c && c < length (m !! f)
+
+tableroLleno :: Juego -> Bool
+tableroLleno j =
+  all (\col -> columnaLlena (dameColumna col j)) [1 .. 7]
+
+-- tableroLleno j =
+--   columnaLlena (dameColumna 1 j)
+--     && columnaLlena (dameColumna 2 j)
+--     && columnaLlena (dameColumna 3 j)
+--     && columnaLlena (dameColumna 4 j)
+--     && columnaLlena (dameColumna 5 j)
+--     && columnaLlena (dameColumna 6 j)
+--     && columnaLlena (dameColumna 7 j)
+
+columnaLlena :: [Color] -> Bool
+columnaLlena l = length l == alturaColumna
 
 dameColumna :: Columna -> Juego -> [Color]
 dameColumna col j =
@@ -130,5 +187,42 @@ dameColumnaCompleta' c j =
 -- [Nothing, Nothing, Nothing, Nothing, Just Rojo, Just Amarillo]
 
 -- contenido :: Columna -> Fila -> Juego -> Maybe Color
--- termino :: Juego -> Bool
--- ganador :: Juego -> Maybe Color
+
+termino :: Juego -> Bool
+termino j =
+  case estado j of
+    EnProgreso -> False
+    Gano _ -> True
+    Empate -> True
+
+ganador :: Juego -> Maybe Color
+ganador j =
+  case estado j of
+    EnProgreso -> Nothing
+    Gano c -> Just c
+    Empate -> Nothing
+
+hay4 :: (Eq a) => [a] -> a -> Bool
+hay4 l e = length l >= 4 && (take 4 l == [e, e, e, e] || hay4 (tail l) e)
+
+-- hay4 l e =
+--   (length l >= 4)
+--     && (todosIgualesA (take 4 l) e || hay4 (tail l) e)
+
+-- >>> hay4 [1,2,2,3,2] 2
+-- False
+
+todosIgualesA :: (Eq a) => [a] -> a -> Bool
+todosIgualesA [] e = True
+todosIgualesA (x : xs) e = x == e && todosIgualesA xs e
+
+-- todosIguales' :: (Eq a) => [a] -> Maybe a
+-- todosIguales' [] = Nothing
+-- todosIguales' (x : []) = Just x
+-- todosIguales' (x : xs) =
+--   case todosIguales' xs of
+--     Nothing -> Nothing
+--     Just y -> if y == x then Just x else Nothing
+
+-- >>> todosIguales [Nothing, Nothing]
+-- True
