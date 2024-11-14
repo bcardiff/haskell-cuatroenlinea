@@ -6,6 +6,7 @@ import CuatroEnLinea
 import Data.Aeson
 import Data.Char
 import GHC.Generics (Generic)
+import System.Environment (getArgs)
 import System.IO.Error
 import TinyApp.Interactive
 
@@ -21,12 +22,17 @@ instance FromJSON Archivo
 
 main :: IO ()
 main = do
-  --   c <- readFile "juego.json"
-  dinicial <- catchIOError (decodeFileStrict "juego.json") (\_ -> pure Nothing)
+  args <- getArgs
+  let nombreArchivo =
+        if length args > 0
+          then
+            head args
+          else
+            "juego.json"
+  dinicial <- catchIOError (decodeFileStrict nombreArchivo) (\_ -> pure Nothing)
   s <- runInteractive' (cuatroEnLinea (cargarArchivo dinicial))
   let dfinal = Archivo {jugadasAr = jugadas s, columnaActualAr = columnaActual s}
-  encodeFile "juego.json" dfinal
-  --   writeFile "juego.json" ("{\"columnaActual\":" <> show (columnaActual s) <> "}")
+  encodeFile nombreArchivo dfinal
 
   pure ()
 
